@@ -40,7 +40,7 @@ class DiceGame:
 
         return self.MOVES
 
-    def getTarget(self):
+    def getTarget(self) -> int:
         """
             Returns the current Target value. If an active roll is not in play, then this will be None.
         """
@@ -109,8 +109,6 @@ class DiceSim(cmd.Cmd):
     """
         Driver class to run the shell prompt of the game.
     """
-    # TODO: Implement "reset" command to reset the game after win/lose
-
     intro = 'Welcome to the Dice Game Simulation.\nType help or ? to list commands.\n'
     prompt = '(dice-game) '
 
@@ -127,7 +125,6 @@ class DiceSim(cmd.Cmd):
     def do_board(self, arg):
         """
             Prints the current state of the Game Board to the console.
-
         """
         print(f"The Game Board is:\n{self.GAME.getBoard()}")
 
@@ -145,14 +142,21 @@ class DiceSim(cmd.Cmd):
         move = self._parseMove(arg)
         if move and self.GAME.isValidMove(move):
             self.GAME.doMove(move)
-            self.DISABLED.remove("roll")
             self.DISABLED.add("move")
             if self.GAME.hasWon():
                 print("Congratulations, You have won the game!")
-                self._resetGame()
+                print("Type `reset` to play again.")
+            else:
+                self.DISABLED.remove("roll")
         else:
             print(f"{move} is not a valid move.")
             print(f"Please select a move from:\n{self.GAME.getMoves()}")
+
+    def do_reset(self, arg):
+        """
+            Resets the board and game state.
+        """
+        self._resetGame()
 
     def do_roll(self, arg):
         """
@@ -162,19 +166,23 @@ class DiceSim(cmd.Cmd):
         target = roll[0] + roll[1]
         self.GAME.setTarget(target)
         moves = self.GAME.getMoves()
+        self.DISABLED.add("roll")
         print(f"You have rolled:\n{roll}")
         print(f"The Target value is:\n{target}")
         if not moves or len(moves) == 0:
             print("There are no available moves. You have lost the game!")
-            self._resetGame()
+            print("Type `reset` to play again.")
         else:
             self.DISABLED.remove("move")
-            self.DISABLED.add("roll")
-            print(self.DISABLED)
             print(f"This results in the available moves:\n{moves}")
             print("Please select a move from the available moves.")
 
     def precmd(self, line):
+        """
+            Hook that runs before the supplied command, this will:
+                Convert the command to lowercase.
+                Ensure only valid commands are ran based on the state of the game and last command ran.
+        """
         line = line.lower()
         command = line.split()[0]
         if command in self.DISABLED:
