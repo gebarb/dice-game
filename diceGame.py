@@ -109,7 +109,6 @@ class DiceSim(cmd.Cmd):
     """
         Driver class to run the shell prompt of the game.
     """
-    # TODO: use `precommand` to enable/disable commands based on the state of the game
     # TODO: Implement "reset" command to reset the game after win/lose
 
     intro = 'Welcome to the Dice Game Simulation.\nType help or ? to list commands.\n'
@@ -118,8 +117,12 @@ class DiceSim(cmd.Cmd):
     def __init__(self, size=10):
         super(DiceSim, self).__init__()
         self.GAME = DiceGame(size)
+        self.DISABLED = set(["move"])
 
     """ Shell Methods """
+
+    def default(self, line):
+        print("Please enter a valid command.")
 
     def do_board(self, arg):
         """
@@ -142,9 +145,11 @@ class DiceSim(cmd.Cmd):
         move = self._parseMove(arg)
         if move and self.GAME.isValidMove(move):
             self.GAME.doMove(move)
+            self.DISABLED.remove("roll")
+            self.DISABLED.add("move")
             if self.GAME.hasWon():
                 print("Congratulations, You have won the game!")
-                self.GAME.reset()
+                self._resetGame()
         else:
             print(f"{move} is not a valid move.")
             print(f"Please select a move from:\n{self.GAME.getMoves()}")
@@ -161,10 +166,21 @@ class DiceSim(cmd.Cmd):
         print(f"The Target value is:\n{target}")
         if not moves or len(moves) == 0:
             print("There are no available moves. You have lost the game!")
-            self.GAME.reset()
+            self._resetGame()
         else:
+            self.DISABLED.remove("move")
+            self.DISABLED.add("roll")
+            print(self.DISABLED)
             print(f"This results in the available moves:\n{moves}")
             print("Please select a move from the available moves.")
+
+    def precmd(self, line):
+        line = line.lower()
+        command = line.split()[0]
+        if command in self.DISABLED:
+            print(f"`{command}` is disabled due to the state of the game.")
+            return "invalid"
+        return line
 
     """ Functional Methods """
 
@@ -181,6 +197,13 @@ class DiceSim(cmd.Cmd):
                 return option1
 
         return None
+
+    def _resetGame(self):
+        """
+            Resets the simulator and game to the initial state.
+        """
+        self.DISABLED = set(["move"])
+        self.GAME.reset()
 
 
 def main(argv):
