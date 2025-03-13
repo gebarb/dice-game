@@ -11,6 +11,6 @@
 
 ##### Python + Cmd
 
-- Execute the command `python diceGame.py`
+- Execute the command `python start.py`
   - Descriptions and help for all commands are present within the simulation by following the prompts.
-  - The Size of the Game Board may be controlled by specifying a command line argument such as `python diceGame.py -d 10` or `python diceGame.py --size 10`
+  - The Size of the Game Board may be controlled by specifying a command line argument such as `python start.py -d 10` or `python start.py --size 10`
